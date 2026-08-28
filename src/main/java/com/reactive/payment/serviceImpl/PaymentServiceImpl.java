@@ -89,37 +89,38 @@ public class PaymentServiceImpl implements PaymentService {
 
         return Mono.defer(() -> {
 
-                    Payment payment = new Payment();
+            Payment payment = new Payment();
 
-                    payment.setOrderId(order.getId());
-                    payment.setCustomerName(order.getCustomerName());
-                    payment.setAmount(request.getAmount());
-                    payment.setStatus(PaymentStatus.PROCESSING);
-                    payment.setCreatedAt(LocalDateTime.now());
-                    payment.setUpdatedAt(LocalDateTime.now());
+            payment.setOrderId(order.getId());
+            payment.setCustomerName(order.getCustomerName());
+            payment.setAmount(request.getAmount());
+            payment.setCreatedAt(LocalDateTime.now());
+            payment.setUpdatedAt(LocalDateTime.now());
 
-                    return paymentRepository.save(payment);
-                })
-                .flatMap(payment -> {
+            // Compare payment amount with actual order total
+            if (request.getAmount().compareTo(order.getTotalAmount()) != 0) {
 
-                    /*
-                     * Sample application:
-                     * payment is treated as successful after processing.
-                     *
-                     * Later this is where a real payment gateway
-                     * integration can be introduced.
-                     */
-                    payment.setStatus(PaymentStatus.SUCCESS);
-                    payment.setUpdatedAt(LocalDateTime.now());
+                payment.setStatus(PaymentStatus.FAILED);
 
-                    return paymentRepository.save(payment)
-                            .flatMap(savedPayment ->
-                                    orderServiceClient.confirmOrder(
-                                                    savedPayment.getOrderId()
-                                            )
-                                            .thenReturn(savedPayment)
-                            );
-                });
+                return paymentRepository.save(payment)
+                        .flatMap(savedPayment ->
+                                orderServiceClient.paymentFailed(
+                                                savedPayment.getOrderId()
+                                        )
+                                        .thenReturn(savedPayment)
+                        );
+            }
+
+            payment.setStatus(PaymentStatus.SUCCESS);
+
+            return paymentRepository.save(payment)
+                    .flatMap(savedPayment ->
+                            orderServiceClient.confirmOrder(
+                                            savedPayment.getOrderId()
+                                    )
+                                    .thenReturn(savedPayment)
+                    );
+        });
     }
 
     @Override
