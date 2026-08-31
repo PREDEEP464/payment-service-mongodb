@@ -165,6 +165,31 @@ public class PaymentServiceImpl implements PaymentService {
                 );
     }
 
+    @Override
+    public Mono<PaymentResponse> getPaymentByOrderId(String orderId) {
+
+        return paymentRepository.findByOrderId(orderId)
+                .switchIfEmpty(
+                        Mono.error(
+                                new PaymentNotFoundException(
+                                        "Payment not found for order: " + orderId
+                                )
+                        )
+                )
+                .map(this::convertToResponse)
+                .doOnNext(payment ->
+                        System.out.println(
+                                "Payment found for order: " + orderId
+                        )
+                )
+                .doOnError(error ->
+                        System.err.println(
+                                "Error while fetching payment: "
+                                        + error.getMessage()
+                        )
+                );
+    }
+
     private PaymentResponse convertToResponse(Payment payment) {
 
         return new PaymentResponse(

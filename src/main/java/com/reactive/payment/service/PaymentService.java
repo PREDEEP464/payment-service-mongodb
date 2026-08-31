@@ -12,4 +12,6 @@ public interface PaymentService {
     Flux<PaymentResponse> getAllPayments();
 
     Mono<PaymentResponse> getPaymentById(String id);
+
+    Mono<PaymentResponse> getPaymentByOrderId(String orderId);
 }

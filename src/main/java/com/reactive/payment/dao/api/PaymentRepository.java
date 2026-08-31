@@ -11,4 +11,5 @@ public interface PaymentRepository extends ReactiveMongoRepository<Payment, Stri
     Mono<Payment> findByOrderId(String orderId);
 
     Flux<Payment> findByStatus(PaymentStatus status);
+
 }

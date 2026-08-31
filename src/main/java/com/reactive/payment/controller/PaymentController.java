@@ -64,4 +64,19 @@ public class PaymentController {
                         )
                 );
     }
+
+    @GetMapping("/order/{orderId}")
+    public Mono<ResponseEntity<ApiResponse<PaymentResponse>>> getPaymentByOrderId(
+            @PathVariable String orderId) {
+
+        return paymentService.getPaymentByOrderId(orderId)
+                .map(payment ->
+                        ResponseEntity.ok(
+                                new ApiResponse<>(
+                                        "Payment fetched successfully",
+                                        payment
+                                )
+                        )
+                );
+    }
 }
